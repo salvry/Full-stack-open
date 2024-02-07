@@ -11,12 +11,13 @@ blogsRouter.get('/', async (request, response) => {
 
 blogsRouter.post('/', mw.userExtractor, async (request, response) => {
   const body = request.body
-  console.log(request.user)
+
   const user = request.user
   if (!user) {
     return response.status(401).json({ error: 'Not authorized' })
   }
   const blog = new Blog({ title: body.title, author: body.author, url: body.url, likes: body.likes || 0, user: user._id })
+  blog.populate('user', { username: 1 })
   const savedBlog = await blog.save()
   user.blogs = user.blogs.concat(savedBlog._id)
   await user.save()
