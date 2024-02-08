@@ -17,15 +17,15 @@ const Blog = ({ blog, handleLikeChange, handleRemove, loggedUser }) => {
     < div style={blogStyle} >
       {blog.author}: {blog.title}
       <div>
-        <button onClick={() => setShowDetails(!showDetails)}>{showDetails ? 'hide' : 'view'}</button>
+        <button id="show-button" onClick={() => setShowDetails(!showDetails)}>{showDetails ? 'hide' : 'view'}</button>
       </div>
       {showDetails && <div>
-        <div>
+        <div className="blog-url">
           {blog.url}
         </div>
-        <div>
+        <div className="blog-likes">
           Likes: {blog.likes}
-          <button onClick={handleLikeChange}>like</button>
+          <button id="like-button" onClick={handleLikeChange}>like</button>
         </div>
         <div>Blog added by: {blog.user.username}</div>
         {loggedUser.username === blog.user.username &&
