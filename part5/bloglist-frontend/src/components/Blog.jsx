@@ -14,10 +14,10 @@ const Blog = ({ blog, handleLikeChange, handleRemove, loggedUser }) => {
   const [showDetails, setShowDetails] = useState(false)
 
   return (
-    < div style={blogStyle} >
+    < div className="blog" style={blogStyle} >
       {blog.author}: {blog.title}
       <div>
-        <button id="show-button" onClick={() => setShowDetails(!showDetails)}>{showDetails ? 'hide' : 'view'}</button>
+        <button className="show-button" onClick={() => setShowDetails(!showDetails)}>{showDetails ? 'hide' : 'view'}</button>
       </div>
       {showDetails && <div>
         <div className="blog-url">
@@ -25,7 +25,7 @@ const Blog = ({ blog, handleLikeChange, handleRemove, loggedUser }) => {
         </div>
         <div className="blog-likes">
           Likes: {blog.likes}
-          <button id="like-button" onClick={handleLikeChange}>like</button>
+          <button className="like-button" onClick={handleLikeChange}>like</button>
         </div>
         <div>Blog added by: {blog.user.username}</div>
         {loggedUser.username === blog.user.username &&
