@@ -4,6 +4,7 @@ import {
   BrowserRouter as Router,
   Routes, Route, Link, useMatch, useNavigate
 } from 'react-router-dom'
+import { useField } from './hooks'
 
 const Menu = ({ anecdotes, addNew, notification }) => {
   const padding = {
@@ -79,43 +80,52 @@ const Footer = () => (
 )
 
 const CreateNew = (props) => {
-  const [content, setContent] = useState('')
-  const [author, setAuthor] = useState('')
-  const [info, setInfo] = useState('')
+  const contentField = useField('text')
+  const authorField = useField('text')
+  const infoField = useField('text')
 
+  const { reset: resetContent, ...content } = contentField
+  const { reset: resetAuthor, ...author } = authorField
+  const { reset: resetInfo, ...info } = infoField
   const navigate = useNavigate()
+
+  const resetInputs = (e) => {
+    e.preventDefault()
+    resetContent()
+    resetAuthor()
+    resetInfo()
+  }
 
   const handleSubmit = (e) => {
     e.preventDefault()
     props.addNew({
-      content,
-      author,
-      info,
-      votes: 0
+      content: content.value,
+      author: author.value,
+      url: info.value,
+      votes: 0,
     })
-    setContent('')
-    setAuthor('')
-    setInfo('')
+
     navigate('/')
   }
 
   return (
     <div>
       <h2>create a new anecdote</h2>
-      <form onSubmit={handleSubmit}>
+      <form onReset={resetInputs} onSubmit={handleSubmit}>
         <div>
           content
-          <input name='content' value={content} onChange={(e) => setContent(e.target.value)} />
+          <input {...content} />
         </div>
         <div>
           author
-          <input name='author' value={author} onChange={(e) => setAuthor(e.target.value)} />
+          <input {...author} />
         </div>
         <div>
           url for more info
-          <input name='info' value={info} onChange={(e) => setInfo(e.target.value)} />
+          <input {...info} />
         </div>
-        <button>create</button>
+        <button type="submit">create</button>
+        <button type="reset">reset</button>
       </form>
     </div>
   )
