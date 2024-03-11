@@ -115,6 +115,11 @@ const resolvers = {
       return context.currentUser;
     },
   },
+  Author: {
+    bookCount: (root) => {
+      return root.books.length;
+    },
+  },
   Mutation: {
     addAuthor: async (root, args, context) => {
       const currentUser = context.currentUser;
