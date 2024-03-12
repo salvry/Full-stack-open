@@ -1,26 +1,34 @@
 import { useQuery } from "@apollo/client";
-import { LOGGED_USER, ALL_BOOKS } from "../queries";
+import { LOGGED_USER, BOOKS_BY_GENRE } from "../queries";
+import { useState, useEffect } from "react";
 
 const Recommendations = () => {
   const resultUser = useQuery(LOGGED_USER);
-  const resultBooks = useQuery(ALL_BOOKS);
+  const [genre, setGenre] = useState("");
+
+  useEffect(() => {
+    if (resultUser.data) {
+      const genre = resultUser.data.me.favoriteGenre;
+      setGenre(genre);
+    }
+  }, [resultUser.data]);
+
+  const resultBooks = useQuery(BOOKS_BY_GENRE, {
+    variables: { genre },
+  });
 
   if (resultUser.loading || resultBooks.loading) {
     return <div>loading...</div>;
   }
 
-  const user = resultUser.data;
-  const books = resultBooks.data.allBooks;
-
-  const recommendedBooks = Array.from(
-    books.filter((book) => book.genres.includes(user.me.favoriteGenre))
-  );
+  const recommendedBooks = resultBooks.data.allBooks;
+  console.log(recommendedBooks);
 
   return (
     <div>
       <h2>books for you</h2>
       <p>
-        Books in your favorite genre <strong>{user.me.favoriteGenre}</strong>
+        Books in your favorite genre <strong>{genre}</strong>
       </p>
       <table>
         <thead>

@@ -24,6 +24,19 @@ export const ALL_BOOKS = gql`
     }
   }
 `;
+
+export const BOOKS_BY_GENRE = gql`
+  query filterBooksByGenre($genre: String) {
+    allBooks(genre: $genre) {
+      title
+      author {
+        name
+      }
+      published
+      id
+    }
+  }
+`;
 export const CREATE_BOOK = gql`
   mutation createBook(
     $title: String!
