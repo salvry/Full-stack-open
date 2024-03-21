@@ -5,9 +5,38 @@ import LoginForm from "./components/LoginForm";
 import Recommendations from "./components/Recommendations";
 import { useState } from "react";
 import { Routes, Route, useNavigate } from "react-router-dom";
-import { useApolloClient } from "@apollo/client";
+import { useApolloClient, useSubscription } from "@apollo/client";
+import { BOOK_ADDED, ALL_BOOKS, ALL_AUTHORS } from "./queries.js";
 
 const App = () => {
+  useSubscription(BOOK_ADDED, {
+    onData: ({ data }) => {
+      const addedBook = data.data.bookAdded;
+      console.log(data);
+      console.log(addedBook);
+      alert(`New book: ${addedBook.title} by ${addedBook.author.name}`);
+      client.cache.updateQuery({ query: ALL_BOOKS }, (allBooks) => {
+        return {
+          allBooks: allBooks.allBooks.concat(addedBook),
+        };
+      });
+
+      client.cache.updateQuery({ query: ALL_AUTHORS }, (allAuthors) => {
+        console.log(allAuthors);
+        const author = allAuthors.allAuthors.find(
+          (a) => a.name === addedBook.author.name
+        );
+        console.log(author);
+        const updatedAuthor = { ...author, bookCount: author.bookCount + 1 };
+        return {
+          allAuthors: allAuthors.allAuthors.map((a) =>
+            a.name !== addedBook.author.name ? a : updatedAuthor
+          ),
+        };
+      });
+    },
+  });
+
   const [token, setToken] = useState(null);
 
   const client = useApolloClient();

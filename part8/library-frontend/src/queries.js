@@ -51,10 +51,12 @@ export const CREATE_BOOK = gql`
       genres: $genres
     ) {
       title
-
       published
       genres
       id
+      author {
+        name
+      }
     }
   }
 `;
@@ -82,6 +84,17 @@ export const LOGGED_USER = gql`
     me {
       username
       favoriteGenre
+    }
+  }
+`;
+
+export const BOOK_ADDED = gql`
+  subscription {
+    bookAdded {
+      title
+      author {
+        name
+      }
     }
   }
 `;

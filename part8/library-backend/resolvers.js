@@ -1,97 +1,15 @@
-const { ApolloServer } = require("@apollo/server");
-const { startStandaloneServer } = require("@apollo/server/standalone");
 const { GraphQLError } = require("graphql");
 
 const { v1: uuid } = require("uuid");
 
 const jwt = require("jsonwebtoken");
 
-const mongoose = require("mongoose");
-mongoose.set("strictQuery", false);
+const { PubSub } = require("graphql-subscriptions");
+const pubsub = new PubSub();
+
 const Book = require("./models/book");
 const Author = require("./models/author");
 const User = require("./models/user");
-
-require("dotenv").config();
-
-const MONGODB_URI = process.env.MONGODB_URI;
-
-console.log("connecting to", MONGODB_URI);
-
-mongoose
-  .connect(MONGODB_URI)
-  .then(() => {
-    console.log("connected to MongoDB");
-  })
-  .catch((error) => {
-    console.log("error connection to MongoDB:", error.message);
-  });
-
-const typeDefs = `
-type Author{
-  name: String!
-  id: ID!
-  born: Int
-  books: [Book!]!
-  bookCount: Int!
-}
-type Book {
-  title: String!
-  published: Int!
-  author: Author!
-  genres: [String!]!
-  id: ID!
-}
-
-type User {
-  username: String!
-  favoriteGenre: String!
-  id: ID!
-}
-
-type Token {
-  value: String!
-}
-
-  type Query {
-    bookCount: Int!
-    authorCount: Int!
-    allBooks(author: String, genre:String): [Book!]!
-    allAuthors: [Author!]!
-    booksByAuthor(name:String!): [Book!]!
-    bookCountByAuthor(name:String!): Int! 
-    me: User
-  }
-
-  type Mutation {
-    addBook(
-      title: String!
-      author: String!
-      published: Int
-      genres: [String!]!
-    ): Book
-
-    addAuthor(
-      name:String!
-      born:Int
-    ): Author
-
-    editAuthor(
-      name: String!
-      setBornTo: Int!
-    ): Author
-
-    createUser(
-      username: String!
-      favoriteGenre: String!
-    ): User
-
-    login(
-      username: String!
-      password: String!
-    ): Token
-  }
-`;
 
 const resolvers = {
   Query: {
@@ -171,7 +89,9 @@ const resolvers = {
         authorFound.books.push(book.id);
         try {
           await authorFound.save();
-          return await book.save();
+          pubsub.publish("BOOK_ADDED", { bookAdded: book.populate("author") });
+          await book.save();
+          return book.populate("author");
         } catch (error) {
           throw new GraphQLError(
             "Failed to add book. Book must have a name with at least 5 characters",
@@ -202,7 +122,9 @@ const resolvers = {
       newAuthor.books.push(book.id);
       try {
         await newAuthor.save();
-        return await book.save();
+        pubsub.publish("BOOK_ADDED", { bookAdded: book.populate("author") });
+        await book.save();
+        return book.populate("author");
       } catch (error) {
         throw new GraphQLError(
           "Failed to add book. Book must have a name with at least 5 characters",
@@ -277,25 +199,10 @@ const resolvers = {
       return { value: jwt.sign(userForToken, process.env.JWT_SECRET) };
     },
   },
-};
-const server = new ApolloServer({
-  typeDefs,
-  resolvers,
-});
-
-startStandaloneServer(server, {
-  listen: { port: 4000 },
-  context: async ({ req, res }) => {
-    const auth = req ? req.headers.authorization : null;
-    if (auth && auth.startsWith("Bearer ")) {
-      const decodedToken = jwt.verify(
-        auth.substring(7),
-        process.env.JWT_SECRET
-      );
-      const currentUser = await User.findById(decodedToken.id);
-      return { currentUser };
-    }
+  Subscription: {
+    bookAdded: {
+      subscribe: () => pubsub.asyncIterator("BOOK_ADDED"),
+    },
   },
-}).then(({ url }) => {
-  console.log(`Server ready at ${url}`);
-});
+};
+module.exports = resolvers;
